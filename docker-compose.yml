@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  quickfixj-spring-boot-server:
+    build:
+      context: ./server-dynamic-sessions-database/.
+      dockerfile: ./Dockerfile
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -Xmx512m -Xms512m -Dspring.profiles.active=docker"
+      QUICKFIXJ_SERVER_CONFIG_FILE: "file:/opt/app/server.cfg"
+    volumes:
+      - ./configs/server.cfg:/opt/app/server.cfg
+    depends_on:
+      mysqldb-server:
+        condition: service_healthy
+    restart: always
+    networks:
+      - net
+
+  mysqldb-server:
+    image: mysql/mysql-server:8.0.32
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: quickfix
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testuser
+    volumes:
+      - mysql-server-data:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d
+    restart: always
+    networks:
+      - net
+
+
+volumes:
+  mysql-server-data:
+
+networks:
+  net:
