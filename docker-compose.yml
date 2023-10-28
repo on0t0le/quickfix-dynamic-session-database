@@ -1,6 +1,22 @@
 version: "3.9"
 services:
-  server:
+  server-1:
+    build:
+      context: ./server-dynamic-sessions-database/.
+      dockerfile: ./Dockerfile
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -Xmx512m -Xms512m -Dspring.profiles.active=docker"
+      QUICKFIXJ_SERVER_CONFIG_FILE: "file:/opt/app/server.cfg"
+    volumes:
+      - ./configs/server.cfg:/opt/app/server.cfg
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+    networks:
+      - net
+
+  server-2:
     build:
       context: ./server-dynamic-sessions-database/.
       dockerfile: ./Dockerfile
@@ -44,7 +60,9 @@ services:
       - client-1-logs:/tmp/logs
       - client-1-data:/opt/app/target/data/banzai
     depends_on:
-      server:
+      server-1:
+        condition: service_started
+      server-2:
         condition: service_started
     networks:
       - net
@@ -60,7 +78,9 @@ services:
       - client-2-logs:/tmp/logs
       - client-2-data:/opt/app/target/data/banzai
     depends_on:
-      server:
+      server-1:
+        condition: service_started
+      server-2:
         condition: service_started
     networks:
       - net
