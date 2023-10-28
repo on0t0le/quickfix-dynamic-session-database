@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  quickfixj-spring-boot-server:
+  server:
     build:
       context: ./server-dynamic-sessions-database/.
       dockerfile: ./Dockerfile
@@ -10,13 +10,13 @@ services:
     volumes:
       - ./configs/server.cfg:/opt/app/server.cfg
     depends_on:
-      mysqldb-server:
+      mysql:
         condition: service_healthy
     restart: always
     networks:
       - net
 
-  mysqldb-server:
+  mysql:
     image: mysql/mysql-server:8.0.32
     command: --default-authentication-plugin=mysql_native_password
     environment:
@@ -33,8 +33,44 @@ services:
       - net
 
 
+  client-1:
+    build:
+      context:  ./simple-client/.
+      dockerfile: ./Dockerfile
+    environment:
+      QUIICKFIXJ_CLIENT_CONFIG_FILE: "file:/opt/app/quickfixj-client.cfg"
+    volumes:
+      - ./configs/quickfixj-client-1.cfg:/opt/app/quickfixj-client.cfg
+      - client-1-logs:/tmp/logs
+      - client-1-data:/opt/app/target/data/banzai
+    depends_on:
+      server:
+        condition: service_started
+    networks:
+      - net
+
+  client-2:
+    build:
+      context:  ./simple-client/.
+      dockerfile: ./Dockerfile
+    environment:
+      QUIICKFIXJ_CLIENT_CONFIG_FILE: "file:/opt/app/quickfixj-client.cfg"
+    volumes:
+      - ./configs/quickfixj-client-2.cfg:/opt/app/quickfixj-client.cfg
+      - client-2-logs:/tmp/logs
+      - client-2-data:/opt/app/target/data/banzai
+    depends_on:
+      server:
+        condition: service_started
+    networks:
+      - net
+
 volumes:
   mysql-server-data:
+  client-1-logs:
+  client-1-data:
+  client-2-logs:
+  client-2-data:
 
 networks:
   net:
