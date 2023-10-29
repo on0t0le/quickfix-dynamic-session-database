@@ -15,6 +15,7 @@ spec:
     metadata:
       {{- with .Values.podAnnotations }}
       annotations:
+        checksum/{{ include "quickfix-server.fullname" . }}-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -30,32 +31,47 @@ spec:
       serviceAccountName: {{ include "quickfix-server.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: check-db
+          image: alpine
+          command: ['sh', '-c', "while ! nc -z {{ .Release.Name }}-mysql 3306; do echo 'MySQL is not available'; sleep 2s; done"]
       containers:
-        - name: {{ .Chart.Name }}
+        - name: server
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: QUICKFIXJ_SERVER_CONFIG_FILE
+              value: "file:/opt/app/server.cfg"
+            - name: JAVA_OPTS
+              value: {{ .Values.java_opts }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
+            - name: quickfix-config
+              mountPath: /opt/app/server.cfg
+              subPath: server.cfg
+          {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
       volumes:
+        - name: quickfix-config
+          configMap:
+            name: {{ include "quickfix-server.fullname" . }}-config
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
