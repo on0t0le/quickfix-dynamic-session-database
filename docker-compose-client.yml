@@ -13,23 +13,18 @@ services:
     networks:
       - net
 
-  # client-2:
-  #   build:
-  #     context:  ./simple-client/.
-  #     dockerfile: ./Dockerfile
-  #   environment:
-  #     QUIICKFIXJ_CLIENT_CONFIG_FILE: "file:/opt/app/quickfixj-client.cfg"
-  #   volumes:
-  #     - ./configs/quickfixj-client-2.cfg:/opt/app/quickfixj-client.cfg
-  #     - client-2-logs:/tmp/logs
-  #     - client-2-data:/opt/app/target/data/banzai
-  #   depends_on:
-  #     server-1:
-  #       condition: service_started
-  #     server-2:
-  #       condition: service_started
-  #   networks:
-  #     - net
+  client-2:
+    build:
+      context:  ./simple-client/.
+      dockerfile: ./Dockerfile
+    environment:
+      QUIICKFIXJ_CLIENT_CONFIG_FILE: "file:/opt/app/quickfixj-client.cfg"
+    volumes:
+      - ./configs/quickfixj-client-test-2.cfg:/opt/app/quickfixj-client.cfg
+      - client-2-logs:/tmp/logs
+      - client-2-data:/opt/app/target/data/banzai
+    networks:
+      - net
 
 volumes:
   client-1-logs:
