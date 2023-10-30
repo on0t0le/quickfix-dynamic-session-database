@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  client-1:
+    build:
+      context:  ./simple-client/.
+      dockerfile: ./Dockerfile
+    environment:
+      QUIICKFIXJ_CLIENT_CONFIG_FILE: "file:/opt/app/quickfixj-client.cfg"
+    volumes:
+      - ./configs/quickfixj-client-test-1.cfg:/opt/app/quickfixj-client.cfg
+      - client-1-logs:/tmp/logs
+      - client-1-data:/opt/app/target/data/banzai
+    networks:
+      - net
+
+  client-2:
+    build:
+      context:  ./simple-client/.
+      dockerfile: ./Dockerfile
+    environment:
+      QUIICKFIXJ_CLIENT_CONFIG_FILE: "file:/opt/app/quickfixj-client.cfg"
+    volumes:
+      - ./configs/quickfixj-client-test-2.cfg:/opt/app/quickfixj-client.cfg
+      - client-2-logs:/tmp/logs
+      - client-2-data:/opt/app/target/data/banzai
+    networks:
+      - net
+
+volumes:
+  client-1-logs:
+  client-1-data:
+  client-2-logs:
+  client-2-data:
+
+networks:
+  net:
