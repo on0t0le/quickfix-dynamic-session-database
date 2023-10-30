@@ -2,7 +2,7 @@ name: Docker Image CI
 
 env:
   HELM_EXPERIMENTAL_OCI: 1 #enable OCI support
-  GCR_IMAGE: ghcr.io/${{ github.repository_owner }}/quickfix-server
+  GCR_REPO: ghcr.io/${{ github.repository_owner }}/quickfix-server
 
 on:
   push:
@@ -33,6 +33,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/on0t0le/quickfix-dynamic-session-database:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   helm:
     runs-on: ubuntu-latest
@@ -43,14 +45,8 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Login to acr using helm
+      - name: Release Helm package
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.GCR_IMAGE }} --username ${{ github.repository_owner }} --password-stdin
-
-      - name: Save helm chart to local registry
-        run: |
-          helm chart save ${{ github.workspace }}/.helm/quickfix-server/ ${{ env.GCR_IMAGE }}:${{ github.sha }}
-
-      - name: publish chart to GCR
-        run: |
-          helm push ${{ env.GCR_IMAGE }}:${{ github.sha }}
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.GCR_REPO }} --username ${{ github.repository_owner }} --password-stdin
+          helm package .helm/quickfix-server
+          helm push quickfix-server-*.tgz oci://${{ env.GCR_REPO }}
