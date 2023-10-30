@@ -45,6 +45,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Release Helm package
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.GCR_IMAGE }} --username ${{ github.repository_owner }} --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.GCR_REPO }} --username ${{ github.repository_owner }} --password-stdin
           helm package .helm/quickfix-server
           helm push quickfix-server-*.tgz ${{ env.GCR_REPO }}
